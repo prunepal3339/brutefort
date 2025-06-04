@@ -27,16 +27,32 @@ class LoginGuard {
 		add_filter( 'authenticate', [ $this, 'check_before_login' ], 30, 3 );
 		add_action( 'wp_login_failed', [ $this, 'log_failed_attempt' ] );
 		add_action( 'wp_login', [ $this, 'log_success' ], 10, 2 );
+
+		add_action( 'login_form', [ $this, 'add_honeypot_field' ] );
 	}
 
 	public function check_before_login( $user, $username, $password ) {
 		$ip = $_SERVER['REMOTE_ADDR'] ?? 'unknown';
+
+		if ( isset( $_POST['bf_honeypot_field'] ) && ! empty( $_POST['bf_honeypot_field'] ) ) {
+			//-> TODO: Log this event.
+			return new \WP_Error( 'brutefort_honeypot' , __( 'Login failed. Please try again.', 'brutefort' ) );
+		}
 
 		if ( $this->logs_service->is_ip_locked( $ip, $username ) ) {
 			return $this->show_locked_error();
 		}
 
 		return $user;
+	}
+
+	public function add_honeypot_field() {
+		?>
+		<div style="display: none;">
+			<label for="bf_honeypot_field">Humans!! Leave this field empty:</label>
+			<input type="text" name="bf_honeypot_field" id="bf_honeypot_field" />
+		</div>
+		<?php
 	}
 
 	public function show_locked_error(): \WP_Error {
