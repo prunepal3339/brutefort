@@ -1,0 +1,31 @@
+:root{
+    --spacing: 4px;
+}
+.mx-2 {
+    margin-inline: calc(var(--spacing) * 2);
+}
+.ml-2 {
+    margin-left: calc(var(--spacing) * 2);
+}
+.flex {
+    display: flex;
+}
+.w-\[50px\] {
+    width: 50px;
+}
+.items-center {
+    align-items: center;
+}
+.text-center {
+    text-align: center;
+}
+.mt-2 {
+    margin-top: calc(var(--spacing) * 2);
+}
+.text-2xl {
+  font-size: 1.5rem;
+  /* line-height: 2rem; */
+}
+input[name="bf_math_challenge"]:focus::placeholder {
+    color: transparent;
+}

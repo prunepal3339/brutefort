@@ -29,6 +29,13 @@ class LoginGuard {
 		add_action( 'wp_login', [ $this, 'log_success' ], 10, 2 );
 
 		add_action( 'login_form', [ $this, 'add_honeypot_field' ] );
+
+		add_action( 'login_form', [ $this, 'add_math_challenge_captcha' ] );
+		add_action( 'login_enqueue_scripts', [ $this, 'brutefort_enqueue_login_style' ] );
+	}
+
+	public function brutefort_enqueue_login_style() {
+		wp_enqueue_style( 'bf-login', BF()->plugin_url() . '/assets/css/login.css', [], BF_VERSION );
 	}
 
 	public function check_before_login( $user, $username, $password ) {
@@ -43,6 +50,12 @@ class LoginGuard {
 			return $this->show_locked_error();
 		}
 
+		//-> Math captcha check.
+		if( isset( $_POST['bf_math_challenge'] ) || empty( $_POST[ 'bf_math_challenge' ] ) || ($_SESSION['bf_math_challenge'] != $_POST['bf_math_challenge'] ) ) {
+			//TODO: Log this event.
+			return new \WP_Error( 'brutefort_bot', __( 'Captcha failed. Please try again.', 'brutefort' ) );
+		}
+
 		return $user;
 	}
 
@@ -52,6 +65,41 @@ class LoginGuard {
 			<label for="bf_honeypot_field">Humans!! Leave this field empty:</label>
 			<input type="text" name="bf_honeypot_field" id="bf_honeypot_field" />
 		</div>
+		<?php
+	}
+
+	public function add_math_challenge_captcha() {
+		$num1 = random_int(1, 9);
+		$num2 = random_int(1, 9);
+		$_SESSION['bf_math_challenge'] = $num1 + $num2;
+		?>
+		<div class="flex">
+			<input 
+				type="text" 
+				value="<?php echo $num1; ?>" 
+				disabled 
+				class="w-[50px] text-center mx-2"
+			/>
+			<span 
+				class="mx-2 text-2xl"
+			>+</span>
+			<input 
+				type="text" 
+				value="<?php echo $num2; ?>" 
+				disabled 
+				class="width-[50px] text-center ml-2"
+			/>
+			<span 
+				class="mx-2 text-2xl"
+			>=</span>
+			<input 
+				type="text" 
+				name="bf_math_challenge" 
+				placeholder="?" 
+				required 
+				class="width-[60px] text-center ml-2"
+			/>
+			</div>
 		<?php
 	}
 
